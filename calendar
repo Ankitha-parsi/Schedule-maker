@@ -1,0 +1,105 @@
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+
+class WebPageScheduler:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Web Page Scheduler")
+
+        # Define pastel colors
+        pastel_green = "#A2D8B1"
+        pastel_blue = "#A2C8D8"
+        pastel_purple = "#BAA2D8"
+        pastel_pink = "#D8A2BD"
+
+        # Create widgets
+        self.label = tk.Label(master, text="Web Page Scheduler", font=("Arial", 18))
+        self.label.grid(row=0, column=0, columnspan=3, pady=10)
+
+        self.add_button = tk.Button(master, text="Add Event", command=self.add_event)
+        self.add_button.grid(row=1, column=0, padx=5)
+
+        self.delete_button = tk.Button(master, text="Delete Event", command=self.delete_event)
+        self.delete_button.grid(row=1, column=1, padx=5)
+
+        self.highlight_button = tk.Button(master, text="Highlight Event", command=self.highlight_event)
+        self.highlight_button.grid(row=1, column=2, padx=5)
+
+        self.schedule_label = tk.Label(master, text="Schedule:")
+        self.schedule_label.grid(row=2, column=0, columnspan=3)
+
+        self.schedule_text = tk.Text(master, height=10, width=50, bg=pastel_blue, fg="black")
+        self.schedule_text.grid(row=3, column=0, columnspan=3, padx=10)
+        self.schedule_text.tag_config("important", background=pastel_pink)
+
+        # Initialize schedule
+        self.schedule = {}
+
+    def add_event(self):
+        year = simpledialog.askinteger("Add Event", "Enter year:")
+        month = simpledialog.askinteger("Add Event", "Enter month (1-12):")
+        day = simpledialog.askinteger("Add Event", "Enter day:")
+        event = simpledialog.askstring("Add Event", "Enter event details:")
+
+        if year and month and day and event:
+            date = f"{year}-{month:02d}-{day:02d}"
+            if date not in self.schedule:
+                self.schedule[date] = []
+            self.schedule[date].append(event)
+            self.update_schedule()
+
+    def delete_event(self):
+        year = simpledialog.askinteger("Delete Event", "Enter year:")
+        month = simpledialog.askinteger("Delete Event", "Enter month (1-12):")
+        day = simpledialog.askinteger("Delete Event", "Enter day:")
+        event = simpledialog.askstring("Delete Event", "Enter event details:")
+
+        if year and month and day and event:
+            date = f"{year}-{month:02d}-{day:02d}"
+            if date in self.schedule and event in self.schedule[date]:
+                self.schedule[date].remove(event)
+                if not self.schedule[date]:
+                    del self.schedule[date]
+                self.update_schedule()
+            else:
+                messagebox.showerror("Error", "Event not found in schedule.")
+
+    def highlight_event(self):
+        year = simpledialog.askinteger("Highlight Event", "Enter year:")
+        month = simpledialog.askinteger("Highlight Event", "Enter month (1-12):")
+        day = simpledialog.askinteger("Highlight Event", "Enter day:")
+        event_desc = simpledialog.askstring("Highlight Event", "Enter event description:")
+
+        if year and month and day and event_desc:
+            date = f"{year}-{month:02d}-{day:02d}"
+            if date in self.schedule:
+                for idx, event in enumerate(self.schedule[date]):
+                    if event == event_desc:
+                        start = f"{idx+1}.0"
+                        end = f"{idx+1}.end"
+                        self.schedule_text.tag_add("important", start, end)
+
+    def update_schedule(self):
+        # Get the current highlighted events
+        highlighted_events = set(self.schedule_text.tag_names())
+
+        self.schedule_text.delete(1.0, tk.END)
+        # Sort events by date
+        sorted_schedule = sorted(self.schedule.items())
+        for date, events in sorted_schedule:
+            for event in events:
+                self.schedule_text.insert(tk.END, f"{date}: {event}\n")
+
+        # Reapply the highlighted tag to the events that were previously highlighted
+        for event_tag in highlighted_events:
+            if event_tag != "sel":
+                self.schedule_text.tag_add(event_tag, "1.0", "end")
+                self.schedule_text.tag_config(event_tag)
+
+def main():
+    root = tk.Tk()
+    app = WebPageScheduler(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
